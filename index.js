@@ -10,6 +10,12 @@ app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   next();
 });
+
+// Root route
+app.get('/', (req, res) => {
+  res.send('Welcome to the Ada Derana News API! Use /news to fetch the latest news.');
+});
+
 async function scrapeDescription(newsUrl) {
   try {
     const response = await axios.get(newsUrl);
@@ -33,7 +39,7 @@ async function scrapeImage(newsUrl) {
     const response = await axios.get(newsUrl);
     if (response.status === 200) {
       const $ = cheerio.load(response.data);
-     const imageUrl = $('div.news-banner img.img-responsive').attr('src');
+      const imageUrl = $('div.news-banner img.img-responsive').attr('src');
       return imageUrl;
     }
   } catch (error) {
@@ -42,7 +48,7 @@ async function scrapeImage(newsUrl) {
   return '';
 }
 
-// Route 
+// Route for news
 app.get('/news', async (req, res) => {
   try {
     const response = await axios.get(url);
@@ -62,7 +68,7 @@ app.get('/news', async (req, res) => {
         image: imageUrl,
         time: fullTime,
         new_url: newsUrl,
- powerd_by: "🌴NB DEV SL🌴 ⚠️if yo are use this api give the credits to owner⚠️"     
+        powered_by: "🌴NB DEV SL🌴 ⚠️If you are using this API, give credit to the owner⚠️"
       };
 
       res.json([newsData]);
@@ -74,6 +80,7 @@ app.get('/news', async (req, res) => {
   }
 });
 
+// Start the server
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
