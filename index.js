@@ -13,7 +13,7 @@ app.use((req, res, next) => {
 
 // Root route
 app.get('/', (req, res) => {
-  res.send('Welcome to the Ada Derana News API! Use /news to fetch the latest news.');
+  res.send('Welcome to the Dizer Ada Derana News API! Use /news to fetch the latest news.');
 });
 
 async function scrapeDescription(newsUrl) {
