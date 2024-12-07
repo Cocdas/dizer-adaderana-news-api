@@ -14,6 +14,6 @@
     "express": "^4.18.2"
   },
   "keywords": ["ada-derana", "news", "sinhala", "scraping", "api"],
-  "author": "NB DEV SL",
+  "author": "DIZER",
   "license": "ISC"
 }
