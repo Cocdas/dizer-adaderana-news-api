@@ -10,7 +10,6 @@ app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   next();
 });
-
 async function scrapeDescription(newsUrl) {
   try {
     const response = await axios.get(newsUrl);
@@ -20,7 +19,8 @@ async function scrapeDescription(newsUrl) {
       $('.news-content p').each((i, el) => {
         paragraphs.push($(el).text().trim());
       });
-      return paragraphs.join('\n\n');
+      const newsDescription = paragraphs.join('\n\n');
+      return newsDescription;
     }
   } catch (error) {
     console.error('Error scraping description:', error);
@@ -33,7 +33,7 @@ async function scrapeImage(newsUrl) {
     const response = await axios.get(newsUrl);
     if (response.status === 200) {
       const $ = cheerio.load(response.data);
-      const imageUrl = $('div.news-banner img.img-responsive').attr('src');
+     const imageUrl = $('div.news-banner img.img-responsive').attr('src');
       return imageUrl;
     }
   } catch (error) {
@@ -42,6 +42,7 @@ async function scrapeImage(newsUrl) {
   return '';
 }
 
+// Route 
 app.get('/news', async (req, res) => {
   try {
     const response = await axios.get(url);
@@ -55,14 +56,13 @@ app.get('/news', async (req, res) => {
       const newsUrl = 'https://sinhala.adaderana.lk/' + newsArticle.find('h2 a').attr('href');
       const newsDescription = await scrapeDescription(newsUrl);
       const imageUrl = await scrapeImage(newsUrl);
-
       const newsData = {
         title: newsHeadline,
         description: newsDescription,
         image: imageUrl,
         time: fullTime,
-        news_url: newsUrl,
-        powered_by: "DIZER-MD"
+        new_url: newsUrl,
+ powerd_by: "🌴NB DEV SL🌴 ⚠️if yo are use this api give the credits to owner⚠️"     
       };
 
       res.json([newsData]);
