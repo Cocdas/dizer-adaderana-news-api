@@ -68,7 +68,7 @@ app.get('/news', async (req, res) => {
         image: imageUrl,
         time: fullTime,
         new_url: newsUrl,
-        powered_by: "🌴NB DEV SL🌴 ⚠️If you are using this API, give credit to the owner⚠️"
+        powered_by: "DIZER"
       };
 
       res.json([newsData]);
