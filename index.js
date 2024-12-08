@@ -15,7 +15,7 @@ app.use((req, res, next) => {
 
 // Root route
 app.get('/', (req, res) => {
-  res.send('Welcome to the Ada Derana News API! Use /news to fetch the latest news.');
+  res.send('Welcome to the dizer- Ada Derana News API! Use /news to fetch the latest news.');
 });
 
 async function scrapeDescription(newsUrl) {
@@ -70,7 +70,7 @@ app.get('/news', async (req, res) => {
         image: imageUrl,
         time: fullTime,
         new_url: newsUrl,
-        powered_by: "🌴NB DEV SL🌴 ⚠️If you are using this API, give credit to the owner⚠️"
+        powered_by: "DIZER"
       };
 
       res.json([newsData]);
