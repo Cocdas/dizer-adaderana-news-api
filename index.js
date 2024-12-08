@@ -1,3 +1,5 @@
+
+
 const express = require('express');
 const axios = require('axios');
 const cheerio = require('cheerio');
@@ -13,7 +15,7 @@ app.use((req, res, next) => {
 
 // Root route
 app.get('/', (req, res) => {
-  res.send('Welcome to the Dizer Ada Derana News API! Use /news to fetch the latest news.');
+  res.send('Welcome to the Ada Derana News API! Use /news to fetch the latest news.');
 });
 
 async function scrapeDescription(newsUrl) {
@@ -68,7 +70,7 @@ app.get('/news', async (req, res) => {
         image: imageUrl,
         time: fullTime,
         new_url: newsUrl,
-        powered_by: "DIZER"
+        powered_by: "🌴NB DEV SL🌴 ⚠️If you are using this API, give credit to the owner⚠️"
       };
 
       res.json([newsData]);
@@ -82,5 +84,6 @@ app.get('/news', async (req, res) => {
 
 // Start the server
 app.listen(PORT, () => {
-  console.log(Server is running on port ${PORT});
-});  
+  console.log(`Server is running on port ${PORT}`);
+});
+
