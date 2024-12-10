@@ -1,69 +1,79 @@
-const express = require("express");
-const axios = require("axios");
-const cheerio = require("cheerio");
+const express = require('express');
+const axios = require('axios');
+const cheerio = require('cheerio');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Hiru News URL
-const BASE_URL = "https://www.hirunews.lk/local-news.php?pageID=1";
-
+const url = 'https://sinhala.adaderana.lk/sinhala-hot-news.php';
 app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*");
+  res.header('Access-Control-Allow-Origin', '*');
   next();
 });
 
-// Root Route
-app.get("/", (req, res) => {
-  res.send("Welcome to the Hiru News API! Use /news to fetch the latest local news.");
-});
-
-// Scraping Logic
-async function fetchNews() {
+async function scrapeDescription(newsUrl) {
   try {
-    const response = await axios.get(BASE_URL);
+    const response = await axios.get(newsUrl);
     if (response.status === 200) {
       const $ = cheerio.load(response.data);
-      let newsArray = [];
-
-      $(".news-holder").each((i, element) => {
-        const title = $(element).find("h2").text().trim();
-        const url = "https://www.hirunews.lk" + $(element).find("a").attr("href");
-        const image = $(element).find("img").attr("src");
-        const date = $(element).find(".date").text().trim();
-
-        newsArray.push({
-          title,
-          url,
-          image,
-          date,
-          powered_by: "DIZER",
-        });
+      let paragraphs = [];
+      $('.news-content p').each((i, el) => {
+        paragraphs.push($(el).text().trim());
       });
-
-      return newsArray;
+      return paragraphs.join('\n\n');
     }
   } catch (error) {
-    console.error("Error fetching Hiru News:", error.message);
-    return [];
+    console.error('Error scraping description:', error);
   }
+  return '';
 }
 
-// News Route
-app.get("/news", async (req, res) => {
+async function scrapeImage(newsUrl) {
   try {
-    const news = await fetchNews();
-    if (news.length > 0) {
-      res.json(news);
-    } else {
-      res.status(404).json({ error: "No news articles found." });
+    const response = await axios.get(newsUrl);
+    if (response.status === 200) {
+      const $ = cheerio.load(response.data);
+      const imageUrl = $('div.news-banner img.img-responsive').attr('src');
+      return imageUrl;
     }
   } catch (error) {
-    res.status(500).json({ error: "Internal Server Error" });
+    console.error('Error scraping image:', error);
+  }
+  return '';
+}
+
+app.get('/news', async (req, res) => {
+  try {
+    const response = await axios.get(url);
+    if (response.status === 200) {
+      const $ = cheerio.load(response.data);
+      const newsArticle = $('.story-text').first();
+      const newsHeadline = newsArticle.find('h2 a').text();
+      const newsDate = newsArticle.find('.comments span').text().trim();
+      const newsTime = newsArticle.find('.comments span').next().text().trim();
+      const fullTime = (newsDate + ' ' + newsTime).trim();
+      const newsUrl = 'https://sinhala.adaderana.lk/' + newsArticle.find('h2 a').attr('href');
+      const newsDescription = await scrapeDescription(newsUrl);
+      const imageUrl = await scrapeImage(newsUrl);
+
+      const newsData = {
+        title: newsHeadline,
+        description: newsDescription,
+        image: imageUrl,
+        time: fullTime,
+        news_url: newsUrl,
+        powered_by: "DIZER-MD"
+      };
+
+      res.json([newsData]);
+    } else {
+      throw new Error('Failed to fetch data from the website');
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
-// Start the Server
 app.listen(PORT, () => {
-  console.log(`Hiru News API is running on port ${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
 });
