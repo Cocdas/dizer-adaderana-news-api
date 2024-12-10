@@ -1,68 +1,69 @@
-const express = require('express');
-const axios = require('axios');
-const cheerio = require('cheerio');
+const express = require("express");
+const axios = require("axios");
+const cheerio = require("cheerio");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const url = 'https://www.hirunews.lk/local-news.php?pageID=1';
+// Hiru News URL
+const BASE_URL = "https://www.hirunews.lk/local-news.php?pageID=1";
+
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
+  res.header("Access-Control-Allow-Origin", "*");
   next();
 });
 
-// Root route
-app.get('/', (req, res) => {
-  res.send('Welcome to the dizer- Hiru News API! Use /news to fetch the latest news.');
+// Root Route
+app.get("/", (req, res) => {
+  res.send("Welcome to the Hiru News API! Use /news to fetch the latest local news.");
 });
 
-// Function to scrape the description
-async function scrapeDescription(newsUrl) {
+// Scraping Logic
+async function fetchNews() {
   try {
-    const response = await axios.get(newsUrl);
+    const response = await axios.get(BASE_URL);
     if (response.status === 200) {
       const $ = cheerio.load(response.data);
-      const description = $('.news-content').text().trim();
-      return description || 'No description available';
+      let newsArray = [];
+
+      $(".news-holder").each((i, element) => {
+        const title = $(element).find("h2").text().trim();
+        const url = "https://www.hirunews.lk" + $(element).find("a").attr("href");
+        const image = $(element).find("img").attr("src");
+        const date = $(element).find(".date").text().trim();
+
+        newsArray.push({
+          title,
+          url,
+          image,
+          date,
+          powered_by: "DIZER",
+        });
+      });
+
+      return newsArray;
     }
   } catch (error) {
-    console.error('Error scraping description:', error);
-    return 'Error fetching description';
+    console.error("Error fetching Hiru News:", error.message);
+    return [];
   }
 }
 
-// Route for news
-app.get('/news', async (req, res) => {
+// News Route
+app.get("/news", async (req, res) => {
   try {
-    const response = await axios.get(url);
-    if (response.status === 200) {
-      const $ = cheerio.load(response.data);
-
-      const newsArticle = $('.lts-cntp').first(); // First news article
-      const newsHeadline = newsArticle.find('h3 a').text().trim();
-      const newsUrl = 'https://www.hirunews.lk' + newsArticle.find('h3 a').attr('href');
-      const imageUrl = newsArticle.find('.latest-pic img').attr('src');
-      const newsDescription = await scrapeDescription(newsUrl);
-
-      const newsData = {
-        title: newsHeadline || 'No Title Found',
-        description: newsDescription,
-        image: imageUrl || 'No Image Found',
-        new_url: newsUrl || 'No URL Found',
-        powered_by: 'DIZER',
-      };
-
-      res.json([newsData]);
+    const news = await fetchNews();
+    if (news.length > 0) {
+      res.json(news);
     } else {
-      throw new Error('Failed to fetch data from the website');
+      res.status(404).json({ error: "No news articles found." });
     }
   } catch (error) {
-    console.error('Error fetching news:', error.message);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
-// Start the server
+// Start the Server
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`Hiru News API is running on port ${PORT}`);
 });
