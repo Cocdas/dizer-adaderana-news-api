@@ -1,5 +1,3 @@
-
-
 const express = require('express');
 const axios = require('axios');
 const cheerio = require('cheerio');
@@ -7,7 +5,7 @@ const cheerio = require('cheerio');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const url = 'https://sinhala.adaderana.lk/sinhala-hot-news.php';
+const url = 'https://www.hirunews.lk/local-news.php?pageID=1';
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   next();
@@ -15,39 +13,22 @@ app.use((req, res, next) => {
 
 // Root route
 app.get('/', (req, res) => {
-  res.send('Welcome to the dizer- Ada Derana News API! Use /news to fetch the latest news.');
+  res.send('Welcome to the dizer- Hiru News API! Use /news to fetch the latest news.');
 });
 
+// Function to scrape the description
 async function scrapeDescription(newsUrl) {
   try {
     const response = await axios.get(newsUrl);
     if (response.status === 200) {
       const $ = cheerio.load(response.data);
-      let paragraphs = [];
-      $('.news-content p').each((i, el) => {
-        paragraphs.push($(el).text().trim());
-      });
-      const newsDescription = paragraphs.join('\n\n');
-      return newsDescription;
+      const description = $('.news-content').text().trim();
+      return description || 'No description available';
     }
   } catch (error) {
     console.error('Error scraping description:', error);
+    return 'Error fetching description';
   }
-  return '';
-}
-
-async function scrapeImage(newsUrl) {
-  try {
-    const response = await axios.get(newsUrl);
-    if (response.status === 200) {
-      const $ = cheerio.load(response.data);
-      const imageUrl = $('div.news-banner img.img-responsive').attr('src');
-      return imageUrl;
-    }
-  } catch (error) {
-    console.error('Error scraping image:', error);
-  }
-  return '';
 }
 
 // Route for news
@@ -56,21 +37,19 @@ app.get('/news', async (req, res) => {
     const response = await axios.get(url);
     if (response.status === 200) {
       const $ = cheerio.load(response.data);
-      const newsArticle = $('.story-text').first();
-      const newsHeadline = newsArticle.find('h2 a').text();
-      const newsDate = newsArticle.find('.comments span').text().trim();
-      const newsTime = newsArticle.find('.comments span').next().text().trim();
-      const fullTime = (newsDate + ' ' + newsTime).trim();
-      const newsUrl = 'https://sinhala.adaderana.lk/' + newsArticle.find('h2 a').attr('href');
+
+      const newsArticle = $('.lts-cntp').first(); // First news article
+      const newsHeadline = newsArticle.find('h3 a').text().trim();
+      const newsUrl = 'https://www.hirunews.lk' + newsArticle.find('h3 a').attr('href');
+      const imageUrl = newsArticle.find('.latest-pic img').attr('src');
       const newsDescription = await scrapeDescription(newsUrl);
-      const imageUrl = await scrapeImage(newsUrl);
+
       const newsData = {
-        title: newsHeadline,
+        title: newsHeadline || 'No Title Found',
         description: newsDescription,
-        image: imageUrl,
-        time: fullTime,
-        new_url: newsUrl,
-        powered_by: "DIZER"
+        image: imageUrl || 'No Image Found',
+        new_url: newsUrl || 'No URL Found',
+        powered_by: 'DIZER',
       };
 
       res.json([newsData]);
@@ -78,6 +57,7 @@ app.get('/news', async (req, res) => {
       throw new Error('Failed to fetch data from the website');
     }
   } catch (error) {
+    console.error('Error fetching news:', error.message);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -86,4 +66,3 @@ app.get('/news', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
-
